@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3D Black Hole - Feed the Beast</title>
+<title>3D Black Hole - Customizable Edition</title>
 <style>
   body { margin: 0; background: black; overflow: hidden; font-family: Arial, sans-serif; }
   canvas { display: block; }
@@ -13,7 +13,7 @@
     position: fixed;
     top: 0;
     left: 0;
-    width: 220px;
+    width: 230px;
     height: 100%;
     background: rgba(20, 20, 30, 0.95);
     color: white;
@@ -24,11 +24,29 @@
     flex-direction: column;
     justify-content: space-between;
     border-right: 2px solid #222;
+    transition: transform 0.4s ease;
   }
 
-  #controls {
-    flex-grow: 1;
+  #sidebar.hidden {
+    transform: translateX(-100%);
   }
+
+  #toggleSidebar {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background: #ff6600;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    z-index: 11;
+    font-size: 0.9em;
+    transition: 0.3s;
+  }
+
+  #toggleSidebar:hover { background: #ffaa33; }
 
   h2 {
     text-align: center;
@@ -37,7 +55,9 @@
     color: #ffcc33;
   }
 
-  select, button {
+  label { font-size: 0.9em; }
+
+  select, button, input[type=range] {
     width: 100%;
     margin: 10px 0;
     padding: 8px;
@@ -46,7 +66,7 @@
     border-radius: 6px;
   }
 
-  select { background: #333; color: white; }
+  select, input[type=range] { background: #333; color: white; }
   button { background: #ff6600; color: white; cursor: pointer; transition: 0.2s; }
   button:hover { background: #ffaa33; }
 
@@ -70,9 +90,12 @@
 </head>
 <body>
 
+<button id="toggleSidebar">☰ Controls</button>
+
 <div id="sidebar">
   <div id="controls">
     <h2>Feed the Black Hole 🌀</h2>
+
     <label for="objectSelect">Choose Object:</label>
     <select id="objectSelect">
       <option value="planet">Planet 🌍</option>
@@ -81,9 +104,16 @@
       <option value="spacejunk">Space Junk 🧃</option>
       <option value="star">Small Star ✨</option>
     </select>
+
+    <label for="blackHoleSize">Black Hole Size:</label>
+    <input type="range" id="blackHoleSize" min="0.5" max="5" step="0.1" value="1">
+
+    <label for="objectSize">Object Size:</label>
+    <input type="range" id="objectSize" min="0.05" max="1" step="0.05" value="0.15">
+
     <button id="feedBtn">Feed It!</button>
     <button onclick="botfistik()">Summon Bot Fıstık 🤖</button>
-    <p id="feed-title">“It’s hungry again…”</p>
+    <p id="feed-title">“Customize & Feed the Beast”</p>
   </div>
 
   <div id="log"></div>
@@ -93,7 +123,7 @@
 <script src="https://cdn.jsdelivr.net/npm/three@0.125.2/examples/js/controls/OrbitControls.js"></script>
 
 <script>
-  // 🥜 The Legendary Function
+  // 🌰 The Legendary Function
   function botfistik(){
     alert("bot fıstık");
     document.title = "Bot Fıstık";
@@ -108,7 +138,6 @@
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
 
-  // === Controls ===
   const controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
 
@@ -124,14 +153,12 @@
   const stars = new THREE.Points(starGeometry, starMaterial);
   scene.add(stars);
 
-  // === Black Hole ===
-  const blackHole = new THREE.Mesh(
-    new THREE.SphereGeometry(1, 64, 64),
-    new THREE.MeshBasicMaterial({ color: 0x000000 })
-  );
+  // === Black Hole + Disk ===
+  const blackHoleGeo = new THREE.SphereGeometry(1, 64, 64);
+  const blackHoleMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+  const blackHole = new THREE.Mesh(blackHoleGeo, blackHoleMat);
   scene.add(blackHole);
 
-  // === Accretion Disk ===
   const disk = new THREE.Mesh(
     new THREE.TorusGeometry(1.5, 0.2, 16, 100),
     new THREE.MeshBasicMaterial({ color: 0xffaa00 })
@@ -157,12 +184,13 @@
   const feedBtn = document.getElementById('feedBtn');
   const objectSelect = document.getElementById('objectSelect');
   const log = document.getElementById('log');
+  const blackHoleSizeSlider = document.getElementById('blackHoleSize');
+  const objectSizeSlider = document.getElementById('objectSize');
 
-  const objects = []; // Active feeding objects
+  const objects = [];
 
   feedBtn.onclick = () => {
-    const type = objectSelect.value;
-    feedBlackHole(type);
+    feedBlackHole(objectSelect.value);
   };
 
   function feedBlackHole(type) {
@@ -174,11 +202,10 @@
       star: 0xffff88
     };
 
-    const geometry = new THREE.SphereGeometry(0.15, 16, 16);
+    const geometry = new THREE.SphereGeometry(parseFloat(objectSizeSlider.value), 16, 16);
     const material = new THREE.MeshBasicMaterial({ color: colorMap[type] });
     const obj = new THREE.Mesh(geometry, material);
 
-    // spawn position far away
     obj.position.set((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 5, -5 - Math.random() * 5);
     scene.add(obj);
     objects.push({ mesh: obj, velocity: new THREE.Vector3(-obj.position.x / 100, -obj.position.y / 100, 0.1) });
@@ -186,6 +213,17 @@
     logMessage(`Fed the black hole a ${type}!`);
   }
 
+  // === Sidebar toggle ===
+  const sidebar = document.getElementById('sidebar');
+  const toggleBtn = document.getElementById('toggleSidebar');
+  let sidebarVisible = true;
+  toggleBtn.onclick = () => {
+    sidebarVisible = !sidebarVisible;
+    sidebar.classList.toggle('hidden');
+    toggleBtn.textContent = sidebarVisible ? '☰ Hide Controls' : '☰ Show Controls';
+  };
+
+  // === Log helper ===
   function logMessage(msg) {
     const p = document.createElement('p');
     p.textContent = msg;
@@ -200,12 +238,17 @@
     disk.rotation.z += 0.01;
     particles.rotation.y += 0.005;
 
+    // Update black hole scale
+    const scale = parseFloat(blackHoleSizeSlider.value);
+    blackHole.scale.set(scale, scale, scale);
+    disk.scale.set(scale, scale, scale);
+
     // Move objects toward the black hole
     for (let i = objects.length - 1; i >= 0; i--) {
       const o = objects[i];
       o.mesh.position.add(o.velocity);
-      o.mesh.scale.multiplyScalar(0.98); // shrink as it gets closer
-      if (o.mesh.position.length() < 1.2) {
+      o.mesh.scale.multiplyScalar(0.98);
+      if (o.mesh.position.length() < scale * 1.2) {
         scene.remove(o.mesh);
         objects.splice(i, 1);
         logMessage("💥 Object consumed!");
