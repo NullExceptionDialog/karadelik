@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3D Black Hole - Customizable Edition</title>
+<title>3D Black Hole - Feed the Beast</title>
 <style>
   body { margin: 0; background: black; overflow: hidden; font-family: Arial, sans-serif; }
   canvas { display: block; }
@@ -12,41 +12,22 @@
   #sidebar {
     position: fixed;
     top: 0;
-    left: 0;
-    width: 230px;
+    right: 0;
+    width: 250px;
     height: 100%;
-    background: rgba(20, 20, 30, 0.95);
+    background: rgba(20, 20, 30, 0.97);
     color: white;
     padding: 20px;
     box-sizing: border-box;
     z-index: 10;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    border-right: 2px solid #222;
+    transform: translateX(100%);
     transition: transform 0.4s ease;
+    border-left: 2px solid #222;
   }
 
-  #sidebar.hidden {
-    transform: translateX(-100%);
+  #sidebar.open {
+    transform: translateX(0);
   }
-
-  #toggleSidebar {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    background: #ff6600;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 8px 12px;
-    cursor: pointer;
-    z-index: 11;
-    font-size: 0.9em;
-    transition: 0.3s;
-  }
-
-  #toggleSidebar:hover { background: #ffaa33; }
 
   h2 {
     text-align: center;
@@ -55,9 +36,7 @@
     color: #ffcc33;
   }
 
-  label { font-size: 0.9em; }
-
-  select, button, input[type=range] {
+  select, button, input[type="range"] {
     width: 100%;
     margin: 10px 0;
     padding: 8px;
@@ -66,73 +45,70 @@
     border-radius: 6px;
   }
 
-  select, input[type=range] { background: #333; color: white; }
-  button { background: #ff6600; color: white; cursor: pointer; transition: 0.2s; }
-  button:hover { background: #ffaa33; }
+  select, input[type="range"] { background: #333; color: white; }
+  button { background: #ffcc33; color: black; cursor: pointer; }
 
-  #log {
-    font-size: 0.9em;
-    color: #bbb;
-    height: 120px;
-    overflow-y: auto;
-    background: #111;
-    padding: 8px;
-    border-radius: 8px;
+  /* Toggle button */
+  #toggleSidebar {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.8);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    z-index: 11;
+    transition: 0.3s;
   }
-
-  #feed-title {
-    text-align: center;
-    color: #999;
-    font-size: 0.8em;
-    margin-top: 5px;
+  #toggleSidebar:hover {
+    background: #ffcc33;
   }
 </style>
 </head>
 <body>
 
-<button id="toggleSidebar">☰ Controls</button>
+<button id="toggleSidebar">☰</button>
 
 <div id="sidebar">
-  <div id="controls">
-    <h2>Feed the Black Hole 🌀</h2>
-
-    <label for="objectSelect">Choose Object:</label>
-    <select id="objectSelect">
-      <option value="planet">Planet 🌍</option>
-      <option value="asteroid">Asteroid ☄️</option>
-      <option value="satellite">Satellite 🛰️</option>
-      <option value="spacejunk">Space Junk 🧃</option>
-      <option value="star">Small Star ✨</option>
+  <div>
+    <h2>Feed the Black Hole</h2>
+    <label>Choose Object:</label>
+    <select id="objectSelector">
+      <option value="cube">Cube</option>
+      <option value="sphere">Sphere</option>
+      <option value="torus">Torus</option>
     </select>
 
-    <label for="blackHoleSize">Black Hole Size:</label>
-    <input type="range" id="blackHoleSize" min="0.5" max="5" step="0.1" value="1">
+    <label>Object Size:</label>
+    <input type="range" id="objectSize" min="0.2" max="3" step="0.1" value="1">
 
-    <label for="objectSize">Object Size:</label>
-    <input type="range" id="objectSize" min="0.05" max="1" step="0.05" value="0.15">
+    <label>Black Hole Size:</label>
+    <input type="range" id="blackHoleSize" min="0.5" max="3" step="0.1" value="1">
 
-    <button id="feedBtn">Feed It!</button>
-    <button onclick="botfistik()">Summon Bot Fıstık 🤖</button>
-    <p id="feed-title">“Customize & Feed the Beast”</p>
+    <button id="feedButton">Feed!</button>
   </div>
-
-  <div id="log"></div>
+  <div>
+    <button onclick="botfistik()">Summon Bot Fıstık</button>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.125.2/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.125.2/examples/js/controls/OrbitControls.js"></script>
 
 <script>
-  // 🌰 The Legendary Function
   function botfistik(){
     alert("bot fıstık");
     document.title = "Bot Fıstık";
   }
 
-  // === Scene setup ===
+  // Scene setup
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-  camera.position.z = 6;
+  camera.position.z = 5;
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -141,7 +117,7 @@
   const controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
 
-  // === Starfield ===
+  // Starfield
   const starCount = 2000;
   const starGeometry = new THREE.BufferGeometry();
   const starPositions = [];
@@ -149,16 +125,16 @@
     starPositions.push((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200);
   }
   starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
-  const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5 });
-  const stars = new THREE.Points(starGeometry, starMaterial);
+  const stars = new THREE.Points(starGeometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.5 }));
   scene.add(stars);
 
-  // === Black Hole + Disk ===
+  // Black Hole
   const blackHoleGeo = new THREE.SphereGeometry(1, 64, 64);
   const blackHoleMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
   const blackHole = new THREE.Mesh(blackHoleGeo, blackHoleMat);
   scene.add(blackHole);
 
+  // Accretion Disk
   const disk = new THREE.Mesh(
     new THREE.TorusGeometry(1.5, 0.2, 16, 100),
     new THREE.MeshBasicMaterial({ color: 0xffaa00 })
@@ -166,108 +142,73 @@
   disk.rotation.x = Math.PI / 2;
   scene.add(disk);
 
-  // === Glow Particles ===
+  // Glowing particles
+  const particleCount = 1000;
   const particlesGeometry = new THREE.BufferGeometry();
   const positions = [];
-  for (let i = 0; i < 1000; i++) {
+  for (let i = 0; i < particleCount; i++) {
     const angle = Math.random() * 2 * Math.PI;
     const radius = 1.6 + Math.random() * 0.6;
     const height = (Math.random() - 0.5) * 0.1;
     positions.push(radius * Math.cos(angle), height, radius * Math.sin(angle));
   }
   particlesGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  const particlesMaterial = new THREE.PointsMaterial({ color: 0xffaa33, size: 0.02 });
-  const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+  const particles = new THREE.Points(particlesGeometry, new THREE.PointsMaterial({ color: 0xffaa33, size: 0.02 }));
   scene.add(particles);
 
-  // === Feed system ===
-  const feedBtn = document.getElementById('feedBtn');
-  const objectSelect = document.getElementById('objectSelect');
-  const log = document.getElementById('log');
-  const blackHoleSizeSlider = document.getElementById('blackHoleSize');
-  const objectSizeSlider = document.getElementById('objectSize');
-
-  const objects = [];
-
-  feedBtn.onclick = () => {
-    feedBlackHole(objectSelect.value);
-  };
-
-  function feedBlackHole(type) {
-    const colorMap = {
-      planet: 0x3399ff,
-      asteroid: 0x888888,
-      satellite: 0xff4444,
-      spacejunk: 0x999900,
-      star: 0xffff88
-    };
-
-    const geometry = new THREE.SphereGeometry(parseFloat(objectSizeSlider.value), 16, 16);
-    const material = new THREE.MeshBasicMaterial({ color: colorMap[type] });
-    const obj = new THREE.Mesh(geometry, material);
-
-    obj.position.set((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 5, -5 - Math.random() * 5);
-    scene.add(obj);
-    objects.push({ mesh: obj, velocity: new THREE.Vector3(-obj.position.x / 100, -obj.position.y / 100, 0.1) });
-
-    logMessage(`Fed the black hole a ${type}!`);
-  }
-
-  // === Sidebar toggle ===
-  const sidebar = document.getElementById('sidebar');
-  const toggleBtn = document.getElementById('toggleSidebar');
-  let sidebarVisible = true;
-  toggleBtn.onclick = () => {
-    sidebarVisible = !sidebarVisible;
-    sidebar.classList.toggle('hidden');
-    toggleBtn.textContent = sidebarVisible ? '☰ Hide Controls' : '☰ Show Controls';
-  };
-
-  // === Log helper ===
-  function logMessage(msg) {
-    const p = document.createElement('p');
-    p.textContent = msg;
-    log.appendChild(p);
-    log.scrollTop = log.scrollHeight;
-  }
-
-  // === Animation ===
+  // Animate
   function animate() {
     requestAnimationFrame(animate);
-
     disk.rotation.z += 0.01;
     particles.rotation.y += 0.005;
-
-    // Update black hole scale
-    const scale = parseFloat(blackHoleSizeSlider.value);
-    blackHole.scale.set(scale, scale, scale);
-    disk.scale.set(scale, scale, scale);
-
-    // Move objects toward the black hole
-    for (let i = objects.length - 1; i >= 0; i--) {
-      const o = objects[i];
-      o.mesh.position.add(o.velocity);
-      o.mesh.scale.multiplyScalar(0.98);
-      if (o.mesh.position.length() < scale * 1.2) {
-        scene.remove(o.mesh);
-        objects.splice(i, 1);
-        logMessage("💥 Object consumed!");
-      }
-    }
-
     controls.update();
     renderer.render(scene, camera);
   }
-
   animate();
 
-  // === Resize ===
+  // Sidebar logic
+  const sidebar = document.getElementById('sidebar');
+  const toggleBtn = document.getElementById('toggleSidebar');
+  toggleBtn.addEventListener('click', () => sidebar.classList.toggle('open'));
+
+  // Feeding objects
+  document.getElementById('feedButton').addEventListener('click', () => {
+    const type = document.getElementById('objectSelector').value;
+    const size = parseFloat(document.getElementById('objectSize').value);
+    let mesh;
+
+    const material = new THREE.MeshBasicMaterial({ color: Math.random() * 0xffffff });
+
+    if (type === 'cube') mesh = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), material);
+    if (type === 'sphere') mesh = new THREE.Mesh(new THREE.SphereGeometry(size / 2, 32, 32), material);
+    if (type === 'torus') mesh = new THREE.Mesh(new THREE.TorusGeometry(size / 1.5, 0.2, 16, 100), material);
+
+    mesh.position.set((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6);
+    scene.add(mesh);
+
+    // Animate object toward black hole
+    const speed = 0.02 + Math.random() * 0.02;
+    function fall() {
+      mesh.position.lerp(blackHole.position, speed);
+      mesh.scale.multiplyScalar(0.98);
+      if (mesh.scale.x > 0.05) requestAnimationFrame(fall);
+      else scene.remove(mesh);
+    }
+    fall();
+  });
+
+  // Adjust black hole size
+  document.getElementById('blackHoleSize').addEventListener('input', (e) => {
+    const scale = parseFloat(e.target.value);
+    blackHole.scale.set(scale, scale, scale);
+  });
+
+  // Resize handling
   window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
 </script>
-
 </body>
 </html>
