@@ -3,13 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ultimate Black Hole Feeder</title>
+<title>Ultimate Black Hole Feeder Deluxe</title>
 <style>
 body{margin:0;background:#101010;overflow:hidden;font-family:Arial, sans-serif;}
 canvas{display:block;}
-
 #sidebar{
-  position:fixed;top:0;right:0;width:250px;height:100%;
+  position:fixed;top:0;right:0;width:280px;height:100%;
   background:rgba(20,20,30,0.95);color:white;padding:20px;box-sizing:border-box;
   display:flex;flex-direction:column;border-left:2px solid #333;z-index:10;
 }
@@ -17,7 +16,7 @@ canvas{display:block;}
   position:fixed;top:10px;right:10px;width:28px;height:28px;
   background:#ffcc33;border-radius:5px;border:none;cursor:pointer;z-index:11;
 }
-select,input,button{width:100%;margin:10px 0;padding:6px;border:none;border-radius:6px;}
+select,input,button{width:100%;margin:8px 0;padding:6px;border:none;border-radius:6px;}
 button.feed{background:#ffcc33;color:#000;font-weight:bold;cursor:pointer;}
 </style>
 </head>
@@ -38,10 +37,10 @@ button.feed{background:#ffcc33;color:#000;font-weight:bold;cursor:pointer;}
   <label>Projectile Speed:</label>
   <input type="range" id="speedRange" min="0.01" max="0.2" step="0.01" value="0.05">
 
-  <label>Trail Factor:</label>
+  <label>Projectile Trail Factor:</label>
   <input type="range" id="trailRange" min="0.01" max="0.5" step="0.01" value="0.1">
 
-  <label>Object Size:</label>
+  <label>Projectile Size:</label>
   <input type="range" id="objectSize" min="0.1" max="2" step="0.05" value="0.3">
 
   <label>System Scale:</label>
@@ -49,6 +48,21 @@ button.feed{background:#ffcc33;color:#000;font-weight:bold;cursor:pointer;}
 
   <label>Star Count:</label>
   <input type="number" id="starCount" min="100" max="5000" step="50" value="2000">
+
+  <hr>
+  <h4>Accretion Disk Particles</h4>
+
+  <label>Particle Count:</label>
+  <input type="number" id="diskParticleCount" min="100" max="5000" step="50" value="1500">
+
+  <label>Particle Size:</label>
+  <input type="range" id="diskParticleSize" min="0.01" max="0.1" step="0.005" value="0.03">
+
+  <label>Particle Rotation Speed:</label>
+  <input type="range" id="diskParticleSpeed" min="0.001" max="0.05" step="0.001" value="0.003">
+
+  <label>Particle Color:</label>
+  <input type="color" id="diskParticleColor" value="#ffcc66">
 
   <button class="feed" id="feedBtn">Feed</button>
   <button onclick="botfistik()">Summon Bot Fıstık</button>
@@ -71,44 +85,55 @@ document.body.appendChild(renderer.domElement);
 const controls=new THREE.OrbitControls(camera,renderer.domElement);
 controls.enableDamping=true; controls.dampingFactor=0.05;
 
-// System group
+// System Group
 const systemGroup=new THREE.Group();
 scene.add(systemGroup);
 
 // Stars
-let stars, starGeometry, starMaterial;
+let stars, starGeo, starMat;
 function createStars(count){
   if(stars) systemGroup.remove(stars);
-  starGeometry=new THREE.BufferGeometry();
+  starGeo=new THREE.BufferGeometry();
   const positions=[];
   for(let i=0;i<count;i++){
     positions.push((Math.random()-0.5)*200,(Math.random()-0.5)*200,(Math.random()-0.5)*200);
   }
-  starGeometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
-  starMaterial=new THREE.PointsMaterial({color:0xffffff,size:0.5});
-  stars=new THREE.Points(starGeometry,starMaterial);
+  starGeo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  starMat=new THREE.PointsMaterial({color:0xffffff,size:0.5});
+  stars=new THREE.Points(starGeo,starMat);
   systemGroup.add(stars);
 }
 createStars(parseInt(document.getElementById("starCount").value));
 
-// Black Hole + disk + particles
+// Black Hole + Disk
 const blackHole=new THREE.Mesh(new THREE.SphereGeometry(1,128,128), new THREE.MeshBasicMaterial({color:0x000000}));
 systemGroup.add(blackHole);
 
 const disk=new THREE.Mesh(new THREE.TorusGeometry(1.5,0.25,32,200), new THREE.MeshBasicMaterial({color:0xffaa00}));
 disk.rotation.x=Math.PI/2; systemGroup.add(disk);
 
-const particlesGeo=new THREE.BufferGeometry();
-const pPos=[];
-for(let i=0;i<1500;i++){
-  const a=Math.random()*2*Math.PI;
-  const r=1.6+Math.random()*0.6;
-  const h=(Math.random()-0.5)*0.1;
-  pPos.push(r*Math.cos(a),h,r*Math.sin(a));
+// Disk particles
+let diskParticles, diskParticleGeo, diskParticleMat;
+function createDiskParticles(count,size,color){
+  if(diskParticles) systemGroup.remove(diskParticles);
+  diskParticleGeo=new THREE.BufferGeometry();
+  const p=[];
+  for(let i=0;i<count;i++){
+    const a=Math.random()*2*Math.PI;
+    const r=1.6+Math.random()*0.6;
+    const h=(Math.random()-0.5)*0.1;
+    p.push(r*Math.cos(a),h,r*Math.sin(a));
+  }
+  diskParticleGeo.setAttribute('position',new THREE.Float32BufferAttribute(p,3));
+  diskParticleMat=new THREE.PointsMaterial({color:color,size:size});
+  diskParticles=new THREE.Points(diskParticleGeo,diskParticleMat);
+  systemGroup.add(diskParticles);
 }
-particlesGeo.setAttribute('position',new THREE.Float32BufferAttribute(pPos,3));
-const particles=new THREE.Points(particlesGeo,new THREE.PointsMaterial({color:0xffcc66,size:0.03}));
-systemGroup.add(particles);
+createDiskParticles(
+  parseInt(document.getElementById("diskParticleCount").value),
+  parseFloat(document.getElementById("diskParticleSize").value),
+  document.getElementById("diskParticleColor").value
+);
 
 // Lighting
 scene.add(new THREE.PointLight(0xffffff,1));
@@ -144,7 +169,7 @@ function createObject(shape,size){
   return new THREE.Mesh(geo,mat);
 }
 
-// Update star count
+// Update stars
 document.getElementById("starCount").addEventListener("change",(e)=>{createStars(parseInt(e.target.value));});
 
 // System scale
@@ -153,11 +178,26 @@ document.getElementById("systemScale").addEventListener("input",(e)=>{
   systemGroup.scale.set(s,s,s);
 });
 
+// Disk particle controls
+function updateDiskParticles(){
+  const count=parseInt(document.getElementById("diskParticleCount").value);
+  const size=parseFloat(document.getElementById("diskParticleSize").value);
+  const color=document.getElementById("diskParticleColor").value;
+  createDiskParticles(count,size,color);
+}
+document.getElementById("diskParticleCount").addEventListener("change",updateDiskParticles);
+document.getElementById("diskParticleSize").addEventListener("input",updateDiskParticles);
+document.getElementById("diskParticleColor").addEventListener("input",updateDiskParticles);
+
+// Disk particle rotation speed
+let diskRotationSpeed=parseFloat(document.getElementById("diskParticleSpeed").value);
+document.getElementById("diskParticleSpeed").addEventListener("input",(e)=>{diskRotationSpeed=parseFloat(e.target.value);});
+
 // Animate
 function animate(){
   requestAnimationFrame(animate);
   disk.rotation.z+=0.008;
-  particles.rotation.y+=0.003;
+  diskParticles.rotation.y+=diskRotationSpeed;
   stars.rotation.y+=0.0005;
 
   projectiles.forEach((p,i)=>{
@@ -165,11 +205,8 @@ function animate(){
     const distance=p.mesh.position.distanceTo(blackHole.position);
     const force=Math.min(0.05+0.05*(1/distance),0.3);
     p.mesh.position.addScaledVector(dir,p.speed+force);
-    p.mesh.scale.multiplyScalar(1-0.005); // shrink
-    if(distance<1.2){
-      scene.remove(p.mesh);
-      projectiles.splice(i,1);
-    }
+    p.mesh.scale.multiplyScalar(1-0.005);
+    if(distance<1.2){scene.remove(p.mesh); projectiles.splice(i,1);}
   });
 
   controls.update();
