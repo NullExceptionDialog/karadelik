@@ -3,238 +3,195 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3D Black Hole - Smooth Space Edition</title>
+<title>3D Black Hole in Space</title>
 <style>
-  body { 
-    margin: 0; 
-    background: #080808; /* slightly lighter than pure black */
-    overflow: hidden; 
-    font-family: Arial, sans-serif;
-  }
+  body { margin: 0; background: #080808; overflow: hidden; font-family: Arial, sans-serif; }
   canvas { display: block; }
 
   /* Sidebar */
   #sidebar {
     position: fixed;
-    top: 0;
-    right: 0;
-    width: 250px;
-    height: 100%;
-    background: rgba(20, 20, 30, 0.97);
+    top: 0; right: 0;
+    width: 220px; height: 100%;
+    background: rgba(20,20,30,0.95);
     color: white;
-    padding: 20px;
-    box-sizing: border-box;
+    padding: 20px; box-sizing: border-box;
+    display: none; flex-direction: column;
+    border-left: 2px solid #333;
     z-index: 10;
-    transform: translateX(100%);
-    transition: transform 0.4s ease;
-    border-left: 2px solid #222;
-  }
-  #sidebar.open {
-    transform: translateX(0);
   }
 
-  h2 {
-    text-align: center;
-    margin-bottom: 10px;
-    font-size: 1.4em;
-    color: #ffcc33;
-  }
-
-  select, button, input[type="range"] {
-    width: 100%;
-    margin: 10px 0;
-    padding: 8px;
-    font-size: 1em;
-    border: none;
-    border-radius: 6px;
-  }
-
-  select, input[type="range"] { background: #333; color: white; }
-  button { background: #ffcc33; color: black; cursor: pointer; }
-
-  /* Toggle button */
   #toggleSidebar {
     position: fixed;
-    top: 15px;
-    right: 15px;
-    width: 28px;
-    height: 28px;
-    background: rgba(255, 255, 255, 0.8);
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 16px;
-    z-index: 11;
-    transition: 0.3s;
-  }
-  #toggleSidebar:hover {
+    top: 10px; right: 10px;
+    width: 25px; height: 25px;
     background: #ffcc33;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    z-index: 11;
+  }
+
+  select, input, button {
+    width: 100%; margin: 10px 0;
+    padding: 6px; border: none;
+    border-radius: 6px;
+    background: #333; color: white;
+  }
+
+  button.feed {
+    background: #ffcc33; color: #000;
+    cursor: pointer; font-weight: bold;
   }
 </style>
 </head>
 <body>
 
-<button id="toggleSidebar">☰</button>
-
+<button id="toggleSidebar"></button>
 <div id="sidebar">
-  <div>
-    <h2>Feed the Black Hole</h2>
-    <label>Choose Object:</label>
-    <select id="objectSelector">
-      <option value="cube">Cube</option>
-      <option value="sphere">Sphere</option>
-      <option value="torus">Torus</option>
-    </select>
+  <h3>Feed the Black Hole</h3>
+  <label>Shape:</label>
+  <select id="shapeSelect">
+    <option value="sphere">Sphere</option>
+    <option value="cube">Cube</option>
+    <option value="torus">Torus</option>
+    <option value="icosahedron">Icosahedron</option>
+  </select>
 
-    <label>Object Size:</label>
-    <input type="range" id="objectSize" min="0.2" max="3" step="0.1" value="1">
+  <label>Speed:</label>
+  <input type="range" id="speedRange" min="0.01" max="0.2" step="0.01" value="0.05">
 
-    <label>System Scale (Everything):</label>
-    <input type="range" id="systemScale" min="0.5" max="3" step="0.1" value="1">
-
-    <button id="feedButton">Feed!</button>
-  </div>
-  <div>
-    <button onclick="botfistik()">Summon Bot Fıstık</button>
-  </div>
+  <button class="feed" id="feedBtn">Feed</button>
+  <button onclick="botfistik()">Summon Bot Fıstık</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.125.2/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.125.2/examples/js/controls/OrbitControls.js"></script>
 
 <script>
-  function botfistik(){
-    alert("bot fıstık");
-    document.title = "Bot Fıstık";
+function botfistik(){
+  alert("bot fıstık");
+  document.title = "Bot Fıstık";
+}
+
+// Scene
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x101010); // slightly lighter black
+
+// Camera
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+camera.position.z = 5;
+
+// Renderer
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Controls
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+
+// Starfield
+const starCount = 2000;
+const starGeometry = new THREE.BufferGeometry();
+const starPositions = [];
+for (let i = 0; i < starCount; i++) {
+  starPositions.push((Math.random()-0.5)*200, (Math.random()-0.5)*200, (Math.random()-0.5)*200);
+}
+starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5 });
+const stars = new THREE.Points(starGeometry, starMaterial);
+scene.add(stars);
+
+// Black hole + disk
+const blackHole = new THREE.Mesh(
+  new THREE.SphereGeometry(1, 64, 64),
+  new THREE.MeshBasicMaterial({ color: 0x000000 })
+);
+scene.add(blackHole);
+
+const disk = new THREE.Mesh(
+  new THREE.TorusGeometry(1.5, 0.2, 32, 100),
+  new THREE.MeshBasicMaterial({ color: 0xffaa00 })
+);
+disk.rotation.x = Math.PI / 2;
+scene.add(disk);
+
+// Particles around
+const particleCount = 1000;
+const pGeo = new THREE.BufferGeometry();
+const pos = [];
+for (let i = 0; i < particleCount; i++) {
+  const angle = Math.random()*2*Math.PI;
+  const r = 1.6 + Math.random()*0.6;
+  const h = (Math.random()-0.5)*0.1;
+  pos.push(r*Math.cos(angle), h, r*Math.sin(angle));
+}
+pGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+const pMat = new THREE.PointsMaterial({ color: 0xffaa33, size: 0.02 });
+const particles = new THREE.Points(pGeo, pMat);
+scene.add(particles);
+
+// Feeding system
+let projectiles = [];
+document.getElementById("feedBtn").addEventListener("click", () => {
+  const shape = document.getElementById("shapeSelect").value;
+  const speed = parseFloat(document.getElementById("speedRange").value);
+  const obj = createObject(shape);
+  obj.position.copy(camera.position);
+  const dir = new THREE.Vector3();
+  camera.getWorldDirection(dir);
+  projectiles.push({mesh: obj, dir: dir.clone(), speed});
+  scene.add(obj);
+});
+
+function createObject(shape) {
+  let geometry, material;
+  material = new THREE.MeshBasicMaterial({ color: 0x33aaff });
+  switch(shape) {
+    case "cube": geometry = new THREE.BoxGeometry(0.3,0.3,0.3); break;
+    case "torus": geometry = new THREE.TorusGeometry(0.3,0.1,16,50); break;
+    case "icosahedron": geometry = new THREE.IcosahedronGeometry(0.3); break;
+    default: geometry = new THREE.SphereGeometry(0.3, 32, 32);
   }
+  return new THREE.Mesh(geometry, material);
+}
 
-  // Scene setup
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color("#080808");
+// Sidebar toggle
+const sidebar = document.getElementById("sidebar");
+document.getElementById("toggleSidebar").addEventListener("click", () => {
+  sidebar.style.display = (sidebar.style.display === "none") ? "flex" : "none";
+});
 
-  const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-  camera.position.z = 6;
+// Animate
+function animate() {
+  requestAnimationFrame(animate);
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.outputEncoding = THREE.sRGBEncoding;
-  document.body.appendChild(renderer.domElement);
+  // rotations
+  disk.rotation.z += 0.01;
+  particles.rotation.y += 0.005;
 
-  const controls = new THREE.OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.05;
-  controls.rotateSpeed = 0.4;
-
-  // Group for the entire system
-  const systemGroup = new THREE.Group();
-  scene.add(systemGroup);
-
-  // Stars
-  const starCount = 2500;
-  const starGeometry = new THREE.BufferGeometry();
-  const starPositions = [];
-  for (let i = 0; i < starCount; i++) {
-    starPositions.push((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200);
-  }
-  starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
-  const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5, transparent: true, opacity: 0.9 });
-  const stars = new THREE.Points(starGeometry, starMaterial);
-  systemGroup.add(stars);
-
-  // Black Hole
-  const blackHole = new THREE.Mesh(
-    new THREE.SphereGeometry(1, 128, 128),
-    new THREE.MeshBasicMaterial({ color: 0x000000 })
-  );
-  systemGroup.add(blackHole);
-
-  // Accretion Disk
-  const disk = new THREE.Mesh(
-    new THREE.TorusGeometry(1.5, 0.25, 32, 200),
-    new THREE.MeshBasicMaterial({ color: 0xffaa00, wireframe: false })
-  );
-  disk.rotation.x = Math.PI / 2;
-  systemGroup.add(disk);
-
-  // Glowing particles
-  const particleCount = 1500;
-  const particlesGeometry = new THREE.BufferGeometry();
-  const positions = [];
-  for (let i = 0; i < particleCount; i++) {
-    const angle = Math.random() * 2 * Math.PI;
-    const radius = 1.6 + Math.random() * 0.6;
-    const height = (Math.random() - 0.5) * 0.1;
-    positions.push(radius * Math.cos(angle), height, radius * Math.sin(angle));
-  }
-  particlesGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  const particlesMaterial = new THREE.PointsMaterial({ color: 0xffcc66, size: 0.03, transparent: true, opacity: 0.9 });
-  const particles = new THREE.Points(particlesGeometry, particlesMaterial);
-  systemGroup.add(particles);
-
-  // Sidebar logic
-  const sidebar = document.getElementById('sidebar');
-  const toggleBtn = document.getElementById('toggleSidebar');
-  toggleBtn.addEventListener('click', () => sidebar.classList.toggle('open'));
-
-  // Feed new objects
-  document.getElementById('feedButton').addEventListener('click', () => {
-    const type = document.getElementById('objectSelector').value;
-    const size = parseFloat(document.getElementById('objectSize').value);
-    let mesh;
-    const material = new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff, roughness: 0.4, metalness: 0.9 });
-
-    if (type === 'cube') mesh = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), material);
-    if (type === 'sphere') mesh = new THREE.Mesh(new THREE.SphereGeometry(size / 2, 32, 32), material);
-    if (type === 'torus') mesh = new THREE.Mesh(new THREE.TorusGeometry(size / 1.5, 0.2, 16, 100), material);
-
-    mesh.position.set((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6);
-    scene.add(mesh);
-
-    const speed = 0.01 + Math.random() * 0.01;
-    function fall() {
-      mesh.position.lerp(blackHole.position, speed);
-      mesh.scale.multiplyScalar(0.98);
-      if (mesh.scale.x > 0.05) requestAnimationFrame(fall);
-      else scene.remove(mesh);
+  // projectile movement
+  projectiles.forEach((p, i) => {
+    p.mesh.position.addScaledVector(p.dir, p.speed);
+    const dist = p.mesh.position.length();
+    if (dist < 1.2) { // close to black hole → vanish
+      scene.remove(p.mesh);
+      projectiles.splice(i,1);
     }
-    fall();
   });
 
-  // Scale the whole system
-  const scaleControl = document.getElementById('systemScale');
-  scaleControl.addEventListener('input', (e) => {
-    const s = parseFloat(e.target.value);
-    systemGroup.scale.set(s, s, s);
-  });
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
 
-  // Lighting (for smoother reflection)
-  const light = new THREE.PointLight(0xffffff, 1);
-  light.position.set(3, 3, 3);
-  scene.add(light);
-  scene.add(new THREE.AmbientLight(0xffffff, 0.1));
-
-  // Animate everything smoothly
-  let t = 0;
-  function animate() {
-    requestAnimationFrame(animate);
-    t += 0.01;
-    disk.rotation.z += 0.008;
-    particles.rotation.y += 0.003;
-    stars.rotation.y += 0.0005;
-    light.intensity = 1 + Math.sin(t * 2) * 0.2; // subtle pulse
-    controls.update();
-    renderer.render(scene, camera);
-  }
-  animate();
-
-  // Resize handler
-  window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  });
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
 </script>
+
 </body>
 </html>
