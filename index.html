@@ -3,51 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3D Black Hole in Space</title>
+<title>Ultimate Black Hole Feeder</title>
 <style>
-  body { margin: 0; background: #080808; overflow: hidden; font-family: Arial, sans-serif; }
-  canvas { display: block; }
-
+  body { margin:0; background:#101010; overflow:hidden; font-family:Arial, sans-serif; }
+  canvas{display:block;}
+  
   /* Sidebar */
-  #sidebar {
-    position: fixed;
-    top: 0; right: 0;
-    width: 220px; height: 100%;
-    background: rgba(20,20,30,0.95);
-    color: white;
-    padding: 20px; box-sizing: border-box;
-    display: none; flex-direction: column;
-    border-left: 2px solid #333;
-    z-index: 10;
+  #sidebar{
+    position:fixed; top:0; right:0; width:220px; height:100%; background:rgba(20,20,30,0.95);
+    color:white; padding:20px; box-sizing:border-box; display:flex; flex-direction:column;
+    border-left:2px solid #333; z-index:10;
   }
-
-  #toggleSidebar {
-    position: fixed;
-    top: 10px; right: 10px;
-    width: 25px; height: 25px;
-    background: #ffcc33;
-    border-radius: 5px;
-    border: none;
-    cursor: pointer;
-    z-index: 11;
+  #toggleSidebar{
+    position:fixed; top:10px; right:10px; width:25px; height:25px;
+    background:#ffcc33; border-radius:5px; border:none; cursor:pointer; z-index:11;
   }
-
-  select, input, button {
-    width: 100%; margin: 10px 0;
-    padding: 6px; border: none;
-    border-radius: 6px;
-    background: #333; color: white;
-  }
-
-  button.feed {
-    background: #ffcc33; color: #000;
-    cursor: pointer; font-weight: bold;
-  }
+  select,input,button{width:100%; margin:10px 0; padding:6px; border:none; border-radius:6px;}
+  button.feed{background:#ffcc33;color:#000; cursor:pointer; font-weight:bold;}
 </style>
 </head>
 <body>
 
-<button id="toggleSidebar"></button>
+<button id="toggleSidebar">☰</button>
 <div id="sidebar">
   <h3>Feed the Black Hole</h3>
   <label>Shape:</label>
@@ -57,9 +34,12 @@
     <option value="torus">Torus</option>
     <option value="icosahedron">Icosahedron</option>
   </select>
-
+  
   <label>Speed:</label>
   <input type="range" id="speedRange" min="0.01" max="0.2" step="0.01" value="0.05">
+
+  <label>Trail:</label>
+  <input type="range" id="trailRange" min="0.01" max="0.5" step="0.01" value="0.1">
 
   <button class="feed" id="feedBtn">Feed</button>
   <button onclick="botfistik()">Summon Bot Fıstık</button>
@@ -69,127 +49,116 @@
 <script src="https://cdn.jsdelivr.net/npm/three@0.125.2/examples/js/controls/OrbitControls.js"></script>
 
 <script>
-function botfistik(){
-  alert("bot fıstık");
-  document.title = "Bot Fıstık";
-}
+function botfistik(){ alert("bot fıstık"); document.title="Bot Fıstık"; }
 
-// Scene
+// Scene setup
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x101010); // slightly lighter black
+scene.background = new THREE.Color(0x101010);
 
-// Camera
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-camera.position.z = 5;
+camera.position.z = 6;
 
-// Renderer
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias:true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// Controls
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
+controls.enableDamping = true; controls.dampingFactor=0.05;
 
-// Starfield
-const starCount = 2000;
-const starGeometry = new THREE.BufferGeometry();
-const starPositions = [];
-for (let i = 0; i < starCount; i++) {
-  starPositions.push((Math.random()-0.5)*200, (Math.random()-0.5)*200, (Math.random()-0.5)*200);
+// Black hole system
+const systemGroup = new THREE.Group();
+scene.add(systemGroup);
+
+// Stars
+const starsGeo = new THREE.BufferGeometry();
+const starsPos = [];
+for(let i=0;i<2500;i++){starsPos.push((Math.random()-0.5)*200,(Math.random()-0.5)*200,(Math.random()-0.5)*200);}
+starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(starsPos,3));
+const stars = new THREE.Points(starsGeo,new THREE.PointsMaterial({color:0xffffff,size:0.5}));
+systemGroup.add(stars);
+
+// Black hole + disk + particles
+const blackHole = new THREE.Mesh(new THREE.SphereGeometry(1,128,128), new THREE.MeshBasicMaterial({color:0x000000}));
+systemGroup.add(blackHole);
+
+const disk = new THREE.Mesh(new THREE.TorusGeometry(1.5,0.25,32,200), new THREE.MeshBasicMaterial({color:0xffaa00}));
+disk.rotation.x=Math.PI/2;
+systemGroup.add(disk);
+
+const particlesGeo = new THREE.BufferGeometry();
+const pPos=[];
+for(let i=0;i<1500;i++){
+  const a=Math.random()*2*Math.PI;
+  const r=1.6+Math.random()*0.6;
+  const h=(Math.random()-0.5)*0.1;
+  pPos.push(r*Math.cos(a),h,r*Math.sin(a));
 }
-starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
-const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5 });
-const stars = new THREE.Points(starGeometry, starMaterial);
-scene.add(stars);
+particlesGeo.setAttribute('position',new THREE.Float32BufferAttribute(pPos,3));
+const particles = new THREE.Points(particlesGeo,new THREE.PointsMaterial({color:0xffcc66,size:0.03}));
+systemGroup.add(particles);
 
-// Black hole + disk
-const blackHole = new THREE.Mesh(
-  new THREE.SphereGeometry(1, 64, 64),
-  new THREE.MeshBasicMaterial({ color: 0x000000 })
-);
-scene.add(blackHole);
+// Lighting
+scene.add(new THREE.PointLight(0xffffff,1));
+scene.add(new THREE.AmbientLight(0xffffff,0.1));
 
-const disk = new THREE.Mesh(
-  new THREE.TorusGeometry(1.5, 0.2, 32, 100),
-  new THREE.MeshBasicMaterial({ color: 0xffaa00 })
-);
-disk.rotation.x = Math.PI / 2;
-scene.add(disk);
-
-// Particles around
-const particleCount = 1000;
-const pGeo = new THREE.BufferGeometry();
-const pos = [];
-for (let i = 0; i < particleCount; i++) {
-  const angle = Math.random()*2*Math.PI;
-  const r = 1.6 + Math.random()*0.6;
-  const h = (Math.random()-0.5)*0.1;
-  pos.push(r*Math.cos(angle), h, r*Math.sin(angle));
-}
-pGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-const pMat = new THREE.PointsMaterial({ color: 0xffaa33, size: 0.02 });
-const particles = new THREE.Points(pGeo, pMat);
-scene.add(particles);
+// Sidebar toggle
+const sidebar=document.getElementById("sidebar");
+document.getElementById("toggleSidebar").addEventListener("click",()=>{sidebar.style.display=(sidebar.style.display==="none")?"flex":"none";});
+sidebar.style.display="none";
 
 // Feeding system
-let projectiles = [];
-document.getElementById("feedBtn").addEventListener("click", () => {
-  const shape = document.getElementById("shapeSelect").value;
-  const speed = parseFloat(document.getElementById("speedRange").value);
-  const obj = createObject(shape);
+let projectiles=[];
+const feedBtn=document.getElementById("feedBtn");
+feedBtn.addEventListener("click",()=>{
+  const shape=document.getElementById("shapeSelect").value;
+  const speed=parseFloat(document.getElementById("speedRange").value);
+  const trail=parseFloat(document.getElementById("trailRange").value);
+  const obj=createObject(shape);
   obj.position.copy(camera.position);
-  const dir = new THREE.Vector3();
-  camera.getWorldDirection(dir);
-  projectiles.push({mesh: obj, dir: dir.clone(), speed});
+  projectiles.push({mesh:obj,speed,su:trail});
   scene.add(obj);
 });
 
-function createObject(shape) {
-  let geometry, material;
-  material = new THREE.MeshBasicMaterial({ color: 0x33aaff });
-  switch(shape) {
-    case "cube": geometry = new THREE.BoxGeometry(0.3,0.3,0.3); break;
-    case "torus": geometry = new THREE.TorusGeometry(0.3,0.1,16,50); break;
-    case "icosahedron": geometry = new THREE.IcosahedronGeometry(0.3); break;
-    default: geometry = new THREE.SphereGeometry(0.3, 32, 32);
+function createObject(shape){
+  let geo,mat=new THREE.MeshStandardMaterial({color:Math.random()*0xffffff,roughness:0.4,metalness:0.9});
+  switch(shape){
+    case "cube": geo=new THREE.BoxGeometry(0.3,0.3,0.3); break;
+    case "torus": geo=new THREE.TorusGeometry(0.3,0.1,16,50); break;
+    case "icosahedron": geo=new THREE.IcosahedronGeometry(0.3); break;
+    default: geo=new THREE.SphereGeometry(0.3,32,32);
   }
-  return new THREE.Mesh(geometry, material);
+  return new THREE.Mesh(geo,mat);
 }
 
-// Sidebar toggle
-const sidebar = document.getElementById("sidebar");
-document.getElementById("toggleSidebar").addEventListener("click", () => {
-  sidebar.style.display = (sidebar.style.display === "none") ? "flex" : "none";
-});
-
 // Animate
-function animate() {
+function animate(){
   requestAnimationFrame(animate);
+  disk.rotation.z+=0.008;
+  particles.rotation.y+=0.003;
+  stars.rotation.y+=0.0005;
 
-  // rotations
-  disk.rotation.z += 0.01;
-  particles.rotation.y += 0.005;
-
-  // projectile movement
-  projectiles.forEach((p, i) => {
-    p.mesh.position.addScaledVector(p.dir, p.speed);
-    const dist = p.mesh.position.length();
-    if (dist < 1.2) { // close to black hole → vanish
+  projectiles.forEach((p,i)=>{
+    const dir=new THREE.Vector3().subVectors(blackHole.position,p.mesh.position).normalize();
+    const distance=p.mesh.position.distanceTo(blackHole.position);
+    const force=Math.min(0.05+0.05*(1/distance),0.3); // acceleration stronger when close
+    p.mesh.position.addScaledVector(dir,p.speed+force);
+    p.mesh.scale.multiplyScalar(1-0.005); // shrink
+    if(distance<1.2){
       scene.remove(p.mesh);
       projectiles.splice(i,1);
     }
   });
 
   controls.update();
-  renderer.render(scene, camera);
+  renderer.render(scene,camera);
 }
 animate();
 
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
+// Resize
+window.addEventListener('resize',()=>{
+  camera.aspect=window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(window.innerWidth,window.innerHeight);
 });
 </script>
 
